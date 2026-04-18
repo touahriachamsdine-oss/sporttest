@@ -16,7 +16,7 @@ export default function Dashboard() {
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'live' | 'history'>('live');
+  const [activeTab, setActiveTab] = useState<'live' | 'history' | 'sleep'>('live');
 
   const DEVICE_ID = 'esp32-v01';
 
@@ -76,7 +76,7 @@ export default function Dashboard() {
     }
   };
 
-  const startSession = async (label: string) => {
+  const startSession = async (label: string = 'active') => {
     setLoading(true);
     try {
       const res = await fetch('/api/sessions', {
@@ -248,7 +248,25 @@ export default function Dashboard() {
                 />
               </div>
 
-              {/* Charts */}
+              {/* Realtime Waveforms */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-10 border-b border-white/5">
+                <HealthChart
+                  data={readings}
+                  dataKey="ir_raw"
+                  color="var(--neon-green)"
+                  label="NEURAL_PPG"
+                  unit="RAW"
+                />
+                <HealthChart
+                  data={readings}
+                  dataKey="mic_raw"
+                  color="var(--neon-yellow)"
+                  label="AMBIENT_AMP"
+                  unit="RAW"
+                />
+              </div>
+
+              {/* Vital State Charts */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <HealthChart
                   data={readings}
@@ -275,13 +293,22 @@ export default function Dashboard() {
 
                 <div className="flex gap-4 w-full sm:w-auto">
                   {!dataSession ? (
-                    <button
-                      onClick={() => startSession('sleep')}
-                      disabled={loading}
-                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-green-500/10 border border-green-500/30 text-green-400 hover:bg-green-500/20 hover:border-green-400 transition-all text-xs font-black uppercase tracking-widest disabled:opacity-50"
-                    >
-                      <LogIn size={14} /> {t('start_probe')}
-                    </button>
+                    <div className="flex bg-black/40 border border-white/5 p-1 rounded gap-1">
+                      <button
+                        onClick={() => startSession('combat')}
+                        disabled={loading}
+                        className="px-4 py-2 bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500/20 text-[9px] font-black uppercase tracking-widest disabled:opacity-50"
+                      >
+                        COMBAT_SYNC
+                      </button>
+                      <button
+                        onClick={() => startSession('sleep')}
+                        disabled={loading}
+                        className="px-4 py-2 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 text-[9px] font-black uppercase tracking-widest disabled:opacity-50"
+                      >
+                        SLEEP_SYNC
+                      </button>
+                    </div>
                   ) : (
                     <button
                       onClick={endSession}
@@ -318,7 +345,7 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-        ) : (
+        ) : activeTab === 'history' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10 pb-20">
             {history.map((h, i) => (
               <div key={i} className="cyber-panel p-8 border-l-purple-500 group hover:border-opacity-100 hover:bg-purple-500/5 transition-all">
@@ -346,6 +373,8 @@ export default function Dashboard() {
             ))}
             {history.length === 0 && <div className="col-span-full text-center py-40 opacity-10 uppercase tracking-[2em] font-black italic">{t('archive_empty')}</div>}
           </div>
+        ) : (
+          <SleepArchive deviceId={DEVICE_ID} />
         )}
       </main>
 
@@ -369,18 +398,17 @@ export default function Dashboard() {
           </button>
 
           <button
-            onClick={runAnalysis}
-            disabled={analyzing}
-            className="flex-1 flex flex-col items-center py-2 text-amber-400 disabled:opacity-30 transition-all active:scale-95"
+            onClick={() => { setActiveTab('sleep'); }}
+            className={`flex-1 flex flex-col items-center py-2 transition-all rounded-xl ${activeTab === 'sleep' ? 'bg-amber-500/20 text-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.1)]' : 'text-white/30'}`}
           >
-            {analyzing ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} />}
-            <span className="text-[8px] font-bold uppercase mt-1 tracking-widest font-mono">Nexus</span>
+            <Moon size={20} />
+            <span className="text-[8px] font-bold uppercase mt-1 tracking-widest font-mono">Rest</span>
           </button>
         </div>
       </nav>
 
       {/* Desktop Centered Nav */}
-      <div className="hidden md:flex fixed bottom-10 left-1/2 -translate-x-1/2 z-50 p-1 bg-black/60 rounded-full border border-white/10 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
+      <div className="hidden md:flex fixed bottom-10 left-1/2 -translate-x-1/2 z-50 p-1 bg-black/60 rounded-full border border-white/10 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] items-center">
         <button
           onClick={() => setActiveTab('live')}
           className={`px-8 py-3 text-[11px] uppercase tracking-[0.2em] font-black transition-all rounded-full ${activeTab === 'live' ? 'bg-cyan-500/20 text-cyan-400 shadow-[0_0_20px_rgba(0,243,255,0.2)] border border-cyan-500/30' : 'text-white/40 hover:text-white/70'}`}
@@ -391,7 +419,13 @@ export default function Dashboard() {
           onClick={() => { setActiveTab('history'); fetchHistory(); }}
           className={`px-8 py-3 text-[11px] uppercase tracking-[0.2em] font-black transition-all rounded-full ${activeTab === 'history' ? 'bg-purple-500/20 text-purple-400 shadow-[0_0_20px_rgba(188,19,254,0.2)] border border-purple-500/30' : 'text-white/40 hover:text-white/70'}`}
         >
-          Archive_Sync
+          Archive_Log
+        </button>
+        <button
+          onClick={() => setActiveTab('sleep')}
+          className={`px-8 py-3 text-[11px] uppercase tracking-[0.2em] font-black transition-all rounded-full ${activeTab === 'sleep' ? 'bg-amber-500/20 text-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.2)] border border-amber-500/30' : 'text-white/40 hover:text-white/70'}`}
+        >
+          Sleep_Archive
         </button>
       </div>
 
@@ -399,6 +433,103 @@ export default function Dashboard() {
       <footer className="hidden md:block pt-10 pb-20 text-center relative z-10 border-t border-white/5 opacity-20">
         <p className="text-[9px] uppercase tracking-[1em] font-black">BioTrack Neural Interface // Decentralized Health Stream</p>
       </footer>
+    </div >
+  );
+}
+function SleepArchive({ deviceId }: { deviceId: string }) {
+  const [sessions, setSessions] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch(`/api/sessions?device_id=${deviceId}`)
+      .then(res => res.json())
+      .then(data => setSessions(data));
+  }, [deviceId]);
+
+  return (
+    <div className="space-y-8 pb-20 relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="cyber-panel p-8">
+        <h2 className="text-xl font-black tracking-tighter text-amber-400 mb-8 flex items-center gap-3">
+          <Moon size={20} className="animate-pulse" />
+          TEMPORAL_REST_CHART
+        </h2>
+
+        <div className="grid grid-cols-7 gap-3">
+          {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(d => (
+            <div key={d} className="text-[10px] font-black text-white/20 text-center pb-4 border-b border-white/5 uppercase tracking-widest">{d}</div>
+          ))}
+          {Array.from({ length: 35 }).map((_, i) => {
+            const date = i - 3; // Shift to start from a reasonable day
+            if (date < 1 || date > 31) return <div key={i} className="aspect-square opacity-5 bg-white/5 border border-white/5" />;
+
+            const daySessions = sessions.filter(s => s.label === 'sleep' && new Date(s.start_time).getDate() === date);
+            const totalDuration = daySessions.reduce((acc, s) => {
+              if (!s.ended_at) return acc;
+              return acc + (new Date(s.ended_at).getTime() - new Date(s.start_time).getTime());
+            }, 0);
+
+            const intensity = Math.min(totalDuration / (8 * 3600000), 1); // 8 hours for max intensity
+
+            return (
+              <div key={i} className={`aspect-square border flex flex-col p-3 group transition-all relative overflow-hidden ${daySessions.length > 0 ? 'border-amber-500/30' : 'border-white/5 bg-black/40'}`}>
+                <span className="text-[10px] font-mono opacity-20 relative z-10">{date}</span>
+                {daySessions.length > 0 ? (
+                  <div
+                    className="absolute inset-0 bg-amber-500/10 z-0 transition-all group-hover:bg-amber-500/20"
+                    style={{ opacity: 0.1 + intensity * 0.4 }}
+                  />
+                ) : null}
+                {daySessions.length > 0 && (
+                  <div className="mt-auto flex justify-end relative z-10">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="cyber-panel overflow-hidden border-amber-500/20 bg-amber-500/[0.02]">
+        <table className="w-full text-left font-mono">
+          <thead>
+            <tr className="border-b border-white/5 text-[9px] uppercase tracking-widest text-white/20">
+              <th className="p-6">Cycle_Start</th>
+              <th className="p-6">Duration</th>
+              <th className="p-6">Phase_Sync</th>
+            </tr>
+          </thead>
+          <tbody className="text-[11px]">
+            {sessions.filter(s => s.label === 'sleep').sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()).map(s => (
+              <tr key={s.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
+                <td className="p-6 flex flex-col">
+                  <span className="text-white group-hover:text-amber-400 transition-colors font-bold capitalize">
+                    {new Date(s.start_time).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                  </span>
+                  <span className="text-[9px] opacity-40 italic">{new Date(s.start_time).toLocaleTimeString()}</span>
+                </td>
+                <td className="p-6 text-white font-mono uppercase tracking-tighter">
+                  {s.ended_at ? `${Math.round((new Date(s.ended_at).getTime() - new Date(s.start_time).getTime()) / 60000)}m` : <span className="text-amber-500 animate-pulse font-black tracking-widest leading-none">MONITORING_ACTIVE</span>}
+                </td>
+                <td className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 h-0.5 bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-full bg-amber-500/40 rounded-full" style={{ width: s.ended_at ? '85%' : '0%' }} />
+                    </div>
+                    <span className="text-[9px] opacity-40">{s.ended_at ? '85%' : 'SYNC...'}</span>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {sessions.filter(s => s.label === 'sleep').length === 0 && (
+              <tr>
+                <td colSpan={3} className="p-20 text-center text-[10px] uppercase opacity-20 tracking-widest italic">
+                  NO_REST_CYCLES_DETECTED // OPERATIVE_OVERLOAD
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

@@ -5,87 +5,147 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
-// Configuration
+// --- Neural-Link Configuration ---
 #define WIFI_SSID "YOUR_WIFI_SSID"
 #define WIFI_PASS "YOUR_WIFI_PASSWORD"
-#define SERVER_URL "https://your-app.vercel.app/api/ingest"
+#define SERVER_URL "https://sporttest.vercel.app/api/ingest" 
 #define DEVICE_ID "esp32-v01"
 
 MAX30105 particleSensor;
 
-const byte RATE_SIZE = 4; // Increase this for more averaging. 4 is good.
-byte rates[RATE_SIZE]; // Array of heart rates
+#define MIC_DIGITAL 35
+
+const byte RATE_SIZE = 4;
+byte rates[RATE_SIZE];
 byte rateSpot = 0;
-long lastBeat = 0; // Time at which the last beat occurred
+long lastBeat = 0;
+float bpm = 0;
+int avgBpm = 0;
 
-float beatsPerMinute;
-int beatAvg;
+// Mic Detection State
+unsigned long lastSound = 0;
+int clapCount = 0;
+unsigned long clapWindowStart = 0;
+String soundEvent = "";
+unsigned long soundEventTime = 0;
 
-// Mic Config (Simplified for example)
-const int mic_pin = 34; 
+// Sync Interval
+unsigned long lastSync = 0;
+const unsigned long syncInterval = 3000; // 3 seconds
 
 void setup() {
   Serial.begin(115200);
-  
-  // WiFi Setup
+  Wire.begin(21, 22);
+
+  // Connection Phase
   WiFi.begin(WIFI_SSID, WIFI_PASS);
+  Serial.print("Initializing Link");
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
-  Serial.println("WiFi Connected");
+  Serial.println("\nLink Stable.");
 
-  // Sensor Setup
   if (!particleSensor.begin(Wire, I2C_SPEED_FAST)) {
-    Serial.println("MAX30102 was not found. Please check wiring/power. ");
+    Serial.println("MAV30102 Missing. Critical Failure.");
     while (1);
   }
-  particleSensor.setup(); 
-  particleSensor.setPulseAmplitudeRed(0x0A); 
-  particleSensor.setPulseAmplitudeGreen(0); 
+
+  particleSensor.setup(0x0F, 2, 2, 400, 411, 4096);
+  particleSensor.setPulseAmplitudeRed(0x0F);
+  particleSensor.setPulseAmplitudeIR(0x0F);
+
+  pinMode(MIC_DIGITAL, INPUT);
+  Serial.println("Nexus Probe Ready.");
 }
 
 void loop() {
-  long irValue = particleSensor.getIR();
+  long ir = particleSensor.getIR();
+  bool fingerOn = ir > 30000;
 
-  if (checkForBeat(irValue) == true) {
-    long delta = millis() - lastBeat;
-    lastBeat = millis();
-    beatsPerMinute = 60 / (delta / 1000.0);
+  if (fingerOn) {
+    if (checkForBeat(ir)) {
+      long delta = millis() - lastBeat;
+      lastBeat = millis();
+      bpm = 60 / (delta / 1000.0);
 
-    if (beatsPerMinute < 255 && beatsPerMinute > 20) {
-      rates[rateSpot++] = (byte)beatsPerMinute;
-      rateSpot %= RATE_SIZE;
-      beatAvg = 0;
-      for (byte x = 0 ; x < RATE_SIZE ; x++) beatAvg += rates[x];
-      beatAvg /= RATE_SIZE;
+      if (bpm > 50 && bpm < 180) {
+        rates[rateSpot++] = (byte)bpm;
+        rateSpot %= RATE_SIZE;
+
+        // Weighted Average for higher fidelity
+        float wSum = 0, wTotal = 0;
+        for (byte x = 0; x < RATE_SIZE; x++) {
+          float w = x + 1;
+          wSum += rates[x] * w;
+          wTotal += w;
+        }
+        avgBpm = (int)(wSum / wTotal);
+      }
     }
+  } else {
+    bpm = 0;
+    avgBpm = 0;
+    lastBeat = 0;
+    for (byte x = 0; x < RATE_SIZE; x++) rates[x] = 0;
   }
 
-  // Every 5 seconds, send data
-  static unsigned long lastUpdate = 0;
-  if (millis() - lastUpdate > 5000) {
-    lastUpdate = millis();
-    
+  // Mic logic (Clap Detection)
+  int micValue = digitalRead(MIC_DIGITAL);
+  if (micValue == 0) {
+    unsigned long now = millis();
+    if (now - lastSound > 100) {
+      if (now - clapWindowStart < 500) {
+        clapCount++;
+      } else {
+        clapCount = 1;
+        clapWindowStart = now;
+      }
+      lastSound = now;
+      soundEvent = (clapCount >= 2) ? "DOUBLE_CLAP" : "SINGLE_CLAP";
+      if (clapCount >= 2) clapCount = 0;
+      soundEventTime = now;
+    }
+  }
+  if (millis() - soundEventTime > 500) soundEvent = "";
+
+  // Cloud Transmission
+  if (millis() - lastSync > syncInterval) {
+    lastSync = millis();
     if (WiFi.status() == WL_CONNECTED) {
       HTTPClient http;
       http.begin(SERVER_URL);
       http.addHeader("Content-Type", "application/json");
 
-      StaticJsonDocument<200> doc;
+      StaticJsonDocument<400> doc;
       doc["device_id"] = DEVICE_ID;
-      doc["heart_rate"] = beatAvg;
-      doc["spo2"] = 98; // Simplified sensor logic
-      doc["sound_db"] = analogRead(mic_pin) / 10.0; // Mock sound conversion
-      doc["temperature"] = 36.5;
-
-      String requestBody;
-      serializeJson(doc, requestBody);
-
-      int httpResponseCode = http.POST(requestBody);
-      Serial.print("HTTP Response code: ");
-      Serial.println(httpResponseCode);
+      doc["heart_rate"] = avgBpm;
+      doc["spo2"] = fingerOn ? 98.0 : 0.0; 
+      doc["temperature"] = 36.5; 
+      doc["sound_db"] = (soundEvent != "") ? 85.0 : 45.0; // Simulated volume
+      
+      // Raw signal for dashboard visualization
+      doc["ir_raw"] = ir;
+      doc["red_raw"] = particleSensor.getRed();
+      
+      String payload;
+      serializeJson(doc, payload);
+      int code = http.POST(payload);
+      Serial.print("[TX] Status: "); Serial.println(code);
       http.end();
     }
   }
+
+  // Terminal telemetry
+  Serial.print(fingerOn ? "[ON]  " : "[--]  ");
+  Serial.print("IR: ");    Serial.print(ir);
+  Serial.print("  BPM: "); Serial.print(bpm, 1);
+  Serial.print("  Avg: "); Serial.print(avgBpm);
+  if (soundEvent != "") {
+    Serial.print("  EVENT: ");
+    Serial.print(soundEvent);
+  }
+  Serial.println();
+
+  delay(20);
 }
