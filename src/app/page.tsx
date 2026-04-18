@@ -10,7 +10,7 @@ import { useApp } from '@/context/AppContext';
 import { Locale } from '@/lib/i18n';
 
 export default function Dashboard() {
-  const { t, language, setLanguage, theme, setTheme, isRTL, user, session } = useApp();
+  const { t, language, setLanguage, theme, setTheme, isRTL } = useApp();
   const [readings, setReadings] = useState<any[]>([]);
   const [dataSession, setDataSession] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
@@ -172,36 +172,10 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center gap-3">
-            {user ? (
-              <div className="flex items-center gap-4">
-                <Link
-                  href="/admin"
-                  className="p-2 text-white/20 hover:text-red-500 transition-colors"
-                  title="Command Center"
-                >
-                  <ShieldCheck size={18} />
-                </Link>
-                <div className="flex flex-col items-end">
-                  <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest">{user.name || 'Operative'}</span>
-                  <span className="text-[8px] opacity-40 font-mono italic">{user.email}</span>
-                </div>
-                <button
-                  onClick={async () => {
-                    await fetch('/api/auth/sign-out', { method: 'POST' });
-                    window.location.reload();
-                  }}
-                  className="p-2 bg-white/5 border border-white/5 rounded hover:border-red-500/50 hover:text-red-500 transition-all"
-                  title="Disconnect Neural Link"
-                >
-                  <LogOut size={16} />
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <div className={`w-1.5 h-1.5 rounded-full ${dataSession ? 'bg-green-500 shadow-[0_0_10px_#39ff14]' : 'bg-red-500 shadow-[0_0_10px_#ff003c]'} animate-pulse`} />
-                <span className="text-[8px] font-mono opacity-60 uppercase">{dataSession ? t('streaming') : t('idle')}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-3">
+              <div className={`w-1.5 h-1.5 rounded-full ${dataSession ? 'bg-green-500 shadow-[0_0_10px_#39ff14]' : 'bg-red-500 shadow-[0_0_10px_#ff003c]'} animate-pulse`} />
+              <span className="text-[8px] font-mono opacity-60 uppercase">{dataSession ? t('streaming') : t('idle')}</span>
+            </div>
           </div>
         </div>
       </header>
@@ -333,7 +307,7 @@ export default function Dashboard() {
 
             {/* AI Panel */}
             <div className="space-y-8">
-              <AIChat context={{ metrics: current, session_active: !!session }} />
+              <AIChat context={{ metrics: current, session_active: !!dataSession }} />
 
               {/* Security Info - Carousel or list on mobile */}
               <div className="p-6 rounded-lg border border-white/5 bg-white/[0.02] space-y-4 relative overflow-hidden group">

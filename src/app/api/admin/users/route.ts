@@ -4,15 +4,7 @@ import { auth } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
     try {
-        // Simple security check: In a real app, we'd check for an 'admin' role
-        // For now, we'll allow fetching users but recommend adding role-based access
-        const session = await auth.api.getSession({
-            headers: req.headers,
-        });
-
-        if (!session) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+        // Simple security check: Authentication gates removed per client request.
 
         const usersResult = await query('SELECT id, name, email, "createdAt" as created_at FROM public."user" ORDER BY "createdAt" DESC');
 
