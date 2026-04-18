@@ -8,6 +8,10 @@ const withPWA = require('next-pwa')({
 
 const nextConfig: NextConfig = {
   /* config options here */
+  experimental: {
+    // Turbopack workaround for Webpack plugins like next-pwa
+    turbopack: {},
+  } as any,
 };
 
 export default withPWA(nextConfig);
