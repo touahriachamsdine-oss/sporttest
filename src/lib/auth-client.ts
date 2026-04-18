@@ -1,7 +1,7 @@
 import { createAuthClient } from "better-auth/react";
 
 export const authClient = createAuthClient({
-    baseURL: process.env.NEXT_PUBLIC_APP_URL || "", // Set in .env or defaults to window.location.origin
+    baseURL: process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : ""),
 });
 
 export const { signIn, signUp, signOut, useSession } = authClient;
