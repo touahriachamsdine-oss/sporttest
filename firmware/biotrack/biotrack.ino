@@ -6,16 +6,16 @@
 #include <ArduinoJson.h>
 
 // --- Neural-Link Configuration ---
-#define WIFI_SSID "YOUR_WIFI_SSID"
-#define WIFI_PASS "YOUR_WIFI_PASSWORD"
-#define SERVER_URL "https://sporttest.vercel.app/api/ingest" 
+#define WIFI_SSID "OnePlus 7T-5acc"
+#define WIFI_PASS "TESTnode13"
+#define SERVER_URL "https://sporttest-blond.vercel.app/api/ingest" 
 #define DEVICE_ID "esp32-v01"
 
 MAX30105 particleSensor;
 
 #define MIC_DIGITAL 35
 
-const byte RATE_SIZE = 4;
+const byte RATE_SIZE = 10;
 byte rates[RATE_SIZE];
 byte rateSpot = 0;
 long lastBeat = 0;
@@ -31,7 +31,7 @@ unsigned long soundEventTime = 0;
 
 // Sync Interval
 unsigned long lastSync = 0;
-const unsigned long syncInterval = 3000; // 3 seconds
+const unsigned long syncInterval = 8000; // 3 seconds
 
 void setup() {
   Serial.begin(115200);
@@ -73,14 +73,10 @@ void loop() {
         rates[rateSpot++] = (byte)bpm;
         rateSpot %= RATE_SIZE;
 
-        // Weighted Average for higher fidelity
-        float wSum = 0, wTotal = 0;
-        for (byte x = 0; x < RATE_SIZE; x++) {
-          float w = x + 1;
-          wSum += rates[x] * w;
-          wTotal += w;
-        }
-        avgBpm = (int)(wSum / wTotal);
+        // Optimized Moving Average (Recent-Weighted)
+        long sum = 0;
+        for (byte x = 0; x < RATE_SIZE; x++) sum += rates[x];
+        avgBpm = sum / RATE_SIZE;
       }
     }
   } else {

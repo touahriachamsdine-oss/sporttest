@@ -320,36 +320,11 @@ export default function Dashboard() {
             </div>
           </div>
         ) : activeTab === 'history' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10 pb-20">
-            {history.map((h, i) => (
-              <div key={i} className="cyber-panel p-8 border-l-purple-500 group hover:border-opacity-100 hover:bg-purple-500/5 transition-all">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 bg-purple-500/10 rounded border border-purple-500/20 group-hover:border-purple-500">
-                    <HistoryIcon size={18} className="text-purple-400 group-hover:text-purple-300" />
-                  </div>
-                  <span className="text-xs font-black uppercase tracking-[0.2em] text-purple-100">{new Date(h.date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</span>
-                </div>
-                <div className="space-y-5">
-                  <div className="flex justify-between items-end border-b border-white/5 pb-3">
-                    <span className="text-[10px] uppercase tracking-widest opacity-40 font-bold">{t('avg_bpm')}</span>
-                    <span className="text-2xl font-black text-red-500 display-font">{Math.round(h.avg_hr)}</span>
-                  </div>
-                  <div className="flex justify-between items-end border-b border-white/5 pb-3">
-                    <span className="text-[10px] uppercase tracking-widest opacity-40 font-bold">{t('avg_oxygen')}</span>
-                    <span className="text-2xl font-black text-cyan-400 display-font">{Math.round(h.avg_spo2)}%</span>
-                  </div>
-                  <div className="flex justify-between items-end border-b border-white/5 pb-3">
-                    <span className="text-[10px] uppercase tracking-widest opacity-40 font-bold">{t('noise_floor')}</span>
-                    <span className="text-2xl font-black text-purple-400 display-font">{h.avg_sound?.toFixed(1)}<span className="text-xs ml-1 opacity-40">dB</span></span>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {history.length === 0 && <div className="col-span-full text-center py-40 opacity-10 uppercase tracking-[2em] font-black italic">{t('archive_empty')}</div>}
-          </div>
+          <HistoryCalendar history={history} t={t} />
         ) : (
           <SleepArchive deviceId={DEVICE_ID} />
-        )}
+        )
+        }
       </main>
 
       {/* Mobile Bottom Navigation */}
@@ -410,6 +385,99 @@ export default function Dashboard() {
     </div >
   );
 }
+function HistoryCalendar({ history, t }: { history: any[], t: any }) {
+  const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  const [selectedDate, setSelectedDate] = useState<any>(null);
+
+  // Generate 28 days of calendar
+  const today = new Date();
+  const calendarDays = Array.from({ length: 28 }).map((_, i) => {
+    const d = new Date();
+    d.setDate(today.getDate() - (27 - i));
+    return d;
+  });
+
+  return (
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="cyber-panel p-8">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-xl font-black tracking-tighter text-purple-400 flex items-center gap-3">
+            <HistoryIcon size={20} className="animate-pulse" />
+            HEALTH_CHRONO_LOG
+          </h2>
+          <div className="flex gap-2">
+            <div className="flex items-center gap-2 text-[10px] font-bold opacity-40 uppercase tracking-widest">
+              <div className="w-2 h-2 rounded-full bg-red-500" /> BPM
+            </div>
+            <div className="flex items-center gap-2 text-[10px] font-bold opacity-40 uppercase tracking-widest">
+              <div className="w-2 h-2 rounded-full bg-cyan-400" /> SpO2
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-7 gap-3">
+          {days.map(d => (
+            <div key={d} className="text-[10px] font-black text-white/20 text-center pb-4 border-b border-white/5 uppercase tracking-widest">{d}</div>
+          ))}
+          {calendarDays.map((date, i) => {
+            const dateStr = date.toISOString().split('T')[0];
+            const data = history.find(h => h.date.startsWith(dateStr));
+
+            return (
+              <div
+                key={i}
+                onClick={() => data && setSelectedDate(data)}
+                className={`aspect-square border flex flex-col p-3 group transition-all relative overflow-hidden cursor-pointer ${data ? 'border-purple-500/40 bg-purple-500/[0.02] hover:bg-purple-500/10' : 'border-white/5 bg-black/40 opacity-20'}`}
+              >
+                <div className="flex justify-between items-start relative z-10">
+                  <span className="text-[10px] font-mono opacity-40 group-hover:opacity-100">{date.getDate()}</span>
+                  {data && <div className="w-1.5 h-1.5 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]" />}
+                </div>
+
+                {data && (
+                  <div className="mt-auto space-y-1 relative z-10">
+                    <div className="h-1 w-full bg-red-500/20 rounded-full overflow-hidden">
+                      <div className="h-full bg-red-500" style={{ width: `${(data.avg_hr / 160) * 100}%` }} />
+                    </div>
+                    <div className="h-1 w-full bg-cyan-500/20 rounded-full overflow-hidden">
+                      <div className="h-full bg-cyan-400" style={{ width: `${data.avg_spo2}%` }} />
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {selectedDate && (
+        <div className="cyber-panel p-8 border-purple-500 animate-in zoom-in-95 duration-300">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-sm font-black uppercase tracking-[0.3em] text-white">
+              Log_Detail // {new Date(selectedDate.date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+            </h3>
+            <button onClick={() => setSelectedDate(null)} className="text-[10px] font-black opacity-40 hover:opacity-100 uppercase tracking-widest">Close_X</button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-6 bg-white/[0.02] border border-white/5 rounded-lg">
+              <span className="text-[10px] uppercase tracking-widest opacity-40 font-bold block mb-2">{t('avg_bpm')}</span>
+              <span className="text-3xl font-black text-red-500 display-font">{Math.round(selectedDate.avg_hr)}<span className="text-xs ml-1 opacity-40">BPM</span></span>
+            </div>
+            <div className="p-6 bg-white/[0.02] border border-white/5 rounded-lg">
+              <span className="text-[10px] uppercase tracking-widest opacity-40 font-bold block mb-2">{t('avg_oxygen')}</span>
+              <span className="text-3xl font-black text-cyan-400 display-font">{Math.round(selectedDate.avg_spo2)}%</span>
+            </div>
+            <div className="p-6 bg-white/[0.02] border border-white/5 rounded-lg">
+              <span className="text-[10px] uppercase tracking-widest opacity-40 font-bold block mb-2">{t('noise_floor')}</span>
+              <span className="text-3xl font-black text-purple-400 display-font">{selectedDate.avg_sound?.toFixed(1)}<span className="text-xs ml-1 opacity-40">dB</span></span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SleepArchive({ deviceId }: { deviceId: string }) {
   const [sessions, setSessions] = useState<any[]>([]);
 
