@@ -54,7 +54,7 @@ export default function LoginPage() {
                         <h1 className="text-2xl font-black tracking-tighter uppercase italic text-chrome leading-none mb-2 text-glow-cyan">
                             System_Access
                         </h1>
-                        <p className="text-[10px] tracking-[0.3em] opacity-40 uppercase font-bold">BioTrack Neural Gateway</p>
+                        <p className="text-[10px] tracking-[0.3em] opacity-40 uppercase font-bold">evax Neural Gateway</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">

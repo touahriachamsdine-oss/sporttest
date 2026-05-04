@@ -1,6 +1,6 @@
 {
-    "name": "BioTrack",
-    "short_name": "BioTrack",
+    "name": "evax",
+    "short_name": "evax",
     "description": "Cyberpunk Health Monitoring System",
     "start_url": "/",
     "display": "standalone",

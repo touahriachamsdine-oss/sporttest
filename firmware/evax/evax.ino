@@ -5,49 +5,53 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
-// --- Neural-Link Configuration ---
 #define WIFI_SSID "OnePlus 7T-5acc"
 #define WIFI_PASS "TESTnode13"
-#define SERVER_URL "https://sporttest-blond.vercel.app/api/ingest" 
+#define SERVER_URL "https://sporttest-blond.vercel.app/api/ingest"
 #define DEVICE_ID "esp32-v01"
+
+#define MIC_DIGITAL 3
 
 MAX30105 particleSensor;
 
-#define MIC_DIGITAL 35
-
-const byte RATE_SIZE = 10;
+const byte RATE_SIZE = 32;
 byte rates[RATE_SIZE];
 byte rateSpot = 0;
 long lastBeat = 0;
 float bpm = 0;
 int avgBpm = 0;
 
-// Mic Detection State
 unsigned long lastSound = 0;
 int clapCount = 0;
 unsigned long clapWindowStart = 0;
 String soundEvent = "";
 unsigned long soundEventTime = 0;
 
-// Sync Interval
 unsigned long lastSync = 0;
-const unsigned long syncInterval = 8000; // 3 seconds
+const unsigned long syncInterval = 8000;
 
 void setup() {
   Serial.begin(115200);
-  Wire.begin(21, 22);
+  delay(1000);
+  Wire.begin(4, 5);
 
-  // Connection Phase
   WiFi.begin(WIFI_SSID, WIFI_PASS);
-  Serial.print("Initializing Link");
-  while (WiFi.status() != WL_CONNECTED) {
+  Serial.print("Connecting WiFi");
+  int tries = 0;
+  while (WiFi.status() != WL_CONNECTED && tries < 20) {
     delay(500);
     Serial.print(".");
+    tries++;
   }
-  Serial.println("\nLink Stable.");
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\nWiFi Connected.");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("\nWiFi Failed. Running offline.");
+  }
 
   if (!particleSensor.begin(Wire, I2C_SPEED_FAST)) {
-    Serial.println("MAV30102 Missing. Critical Failure.");
+    Serial.println("MAX30102 not found.");
     while (1);
   }
 
@@ -56,7 +60,7 @@ void setup() {
   particleSensor.setPulseAmplitudeIR(0x0F);
 
   pinMode(MIC_DIGITAL, INPUT);
-  Serial.println("Nexus Probe Ready.");
+  Serial.println("Ready.");
 }
 
 void loop() {
@@ -73,7 +77,6 @@ void loop() {
         rates[rateSpot++] = (byte)bpm;
         rateSpot %= RATE_SIZE;
 
-        // Optimized Moving Average (Recent-Weighted)
         long sum = 0;
         for (byte x = 0; x < RATE_SIZE; x++) sum += rates[x];
         avgBpm = sum / RATE_SIZE;
@@ -86,7 +89,7 @@ void loop() {
     for (byte x = 0; x < RATE_SIZE; x++) rates[x] = 0;
   }
 
-  // Mic logic (Clap Detection)
+  // Mic
   int micValue = digitalRead(MIC_DIGITAL);
   if (micValue == 0) {
     unsigned long now = millis();
@@ -105,7 +108,7 @@ void loop() {
   }
   if (millis() - soundEventTime > 500) soundEvent = "";
 
-  // Cloud Transmission
+  // Cloud sync
   if (millis() - lastSync > syncInterval) {
     lastSync = millis();
     if (WiFi.status() == WL_CONNECTED) {
@@ -113,32 +116,47 @@ void loop() {
       http.begin(SERVER_URL);
       http.addHeader("Content-Type", "application/json");
 
-      StaticJsonDocument<400> doc;
-      doc["device_id"] = DEVICE_ID;
-      doc["heart_rate"] = avgBpm;
-      doc["spo2"] = fingerOn ? 98.0 : 0.0; 
-      doc["temperature"] = 36.5; 
-      doc["sound_db"] = (soundEvent != "") ? 85.0 : 45.0; // Simulated volume
-      
-      // Raw signal for dashboard visualization
-      doc["ir_raw"] = ir;
-      doc["red_raw"] = particleSensor.getRed();
-      
+      // Calculate simulated temperature based on heart rate
+      float simulated_temp = 36.5 + (avgBpm > 0 ? (avgBpm - 70) * 0.05 : 0);
+      simulated_temp += (random(-10, 11) / 100.0); // Slight jitter
+      if (simulated_temp < 36.0) simulated_temp = 36.0;
+      if (simulated_temp > 39.5) simulated_temp = 39.5;
+
+      // Calculate simulated ambient temp
+      float ambient_temp = 22.0 + (avgBpm > 0 ? (avgBpm - 70) * 0.02 : 0);
+      ambient_temp += (random(-20, 21) / 100.0); // More jitter for ambient
+
+      StaticJsonDocument<512> doc;
+      doc["device_id"]    = DEVICE_ID;
+      doc["heart_rate"]   = avgBpm;
+      doc["spo2"]         = fingerOn ? 98.0 : 0.0;
+      doc["temperature"]  = simulated_temp;
+      doc["ambient_temp"] = ambient_temp;
+      doc["sound_db"]     = (soundEvent != "") ? 85.0 : 45.0;
+      doc["ir_raw"]       = ir;
+      doc["red_raw"]      = particleSensor.getRed();
+      doc["sound_event"]  = soundEvent;
+      doc["finger_on"]    = fingerOn;
+
       String payload;
       serializeJson(doc, payload);
+
       int code = http.POST(payload);
-      Serial.print("[TX] Status: "); Serial.println(code);
+      Serial.print("[TX] HTTP: "); Serial.println(code);
       http.end();
+    } else {
+      Serial.println("[TX] WiFi lost. Reconnecting...");
+      WiFi.reconnect();
     }
   }
 
-  // Terminal telemetry
+  // Serial
   Serial.print(fingerOn ? "[ON]  " : "[--]  ");
   Serial.print("IR: ");    Serial.print(ir);
   Serial.print("  BPM: "); Serial.print(bpm, 1);
   Serial.print("  Avg: "); Serial.print(avgBpm);
   if (soundEvent != "") {
-    Serial.print("  EVENT: ");
+    Serial.print("  ");
     Serial.print(soundEvent);
   }
   Serial.println();

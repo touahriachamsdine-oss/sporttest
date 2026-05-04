@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
     try {
         const data = await req.json();
-        const { device_id, heart_rate, spo2, temperature, sound_db, red_raw, ir_raw } = data;
+        const { device_id, heart_rate, spo2, temperature, ambient_temp, sound_db, red_raw, ir_raw } = data;
 
         if (!device_id) {
             return NextResponse.json({ error: 'device_id is required' }, { status: 400 });
@@ -32,9 +32,9 @@ export async function POST(req: NextRequest) {
 
         // Insert reading
         await query(
-            `INSERT INTO readings (session_id, device_id, heart_rate, spo2, temperature, sound_db, red_raw, ir_raw)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-            [sessionId, device_id, heart_rate, spo2, temperature || 0, sound_db || 0, red_raw || 0, ir_raw || 0]
+            `INSERT INTO readings (session_id, device_id, heart_rate, spo2, temperature, ambient_temp, sound_db, red_raw, ir_raw)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+            [sessionId, device_id, heart_rate, spo2, temperature || 0, ambient_temp || 0, sound_db || 0, red_raw || 0, ir_raw || 0]
         );
 
         return NextResponse.json({ success: true, session_id: sessionId });
@@ -62,6 +62,7 @@ export async function GET(req: NextRequest) {
                 heart_rate::float, 
                 spo2::float, 
                 temperature::float, 
+                ambient_temp::float,
                 sound_db::float, 
                 red_raw::float, 
                 ir_raw::float, 

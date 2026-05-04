@@ -51,7 +51,7 @@ export async function analyzeSession(readings: unknown[]): Promise<AnalysisResul
 
 export async function chatWithAI(message: string, context: unknown) {
     const prompt = `
-    You are BioTrack AI, a helpful health monitoring assistant powered by Groq. 
+    You are evax AI, a helpful health monitoring assistant powered by Groq. 
     Use the following real-time biometric context to answer the user's question.
     Context: ${JSON.stringify(context)}
     User: ${message}
@@ -61,7 +61,7 @@ export async function chatWithAI(message: string, context: unknown) {
         messages: [
             {
                 role: 'system',
-                content: 'You are BioTrack AI. Be concise and professional. Use markdown for formatting.',
+                content: 'You are evax AI. Be concise and professional. Use markdown for formatting.',
             },
             {
                 role: 'user',

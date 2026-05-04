@@ -2,7 +2,7 @@ export type Locale = 'en' | 'ar' | 'fr';
 
 export const translations = {
     en: {
-        app_name: 'BioTrack',
+        app_name: 'evax',
         link_status: 'Neural_Link',
         live: 'Live',
         logs: 'Logs',
@@ -12,6 +12,7 @@ export const translations = {
         heart_rate: 'Heart Rate',
         oxygen: 'Oxygen Stat',
         temperature: 'Core Temp',
+        ambient_temp: 'Ambient Temp',
         noise: 'Ambient dB',
         start_probe: 'Start_Probe',
         end_link: 'End_Link',
@@ -26,7 +27,7 @@ export const translations = {
         neural_command: 'Neural Command Interface',
     },
     ar: {
-        app_name: 'بيوتراك',
+        app_name: 'إيفاكس',
         link_status: 'الارتباط العصبي',
         live: 'مباشر',
         logs: 'السجلات',
@@ -36,6 +37,7 @@ export const translations = {
         heart_rate: 'نبض القلب',
         oxygen: 'نسبة الأكسجين',
         temperature: 'حرارة الجسم',
+        ambient_temp: 'الحرارة المحيطة',
         noise: 'الضجيج المحيط',
         start_probe: 'بدء الفحص',
         end_link: 'إنهاء الرابط',
@@ -50,7 +52,7 @@ export const translations = {
         neural_command: 'واجهة التحكم العصبية',
     },
     fr: {
-        app_name: 'BioTrack',
+        app_name: 'evax',
         link_status: 'Lien_Neural',
         live: 'Direct',
         logs: 'Journaux',
@@ -60,6 +62,7 @@ export const translations = {
         heart_rate: 'Rythme Cardiaque',
         oxygen: 'Taux Oxygène',
         temperature: 'Temp Corps',
+        ambient_temp: 'Temp Ambiante',
         noise: 'Bruit Ambiant',
         start_probe: 'Démarrer_Sonde',
         end_link: 'Fin_Lien',
