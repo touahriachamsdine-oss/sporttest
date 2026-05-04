@@ -126,13 +126,18 @@ void loop() {
       float ambient_temp = 22.0 + (avgBpm > 0 ? (avgBpm - 70) * 0.02 : 0);
       ambient_temp += (random(-20, 21) / 100.0); // More jitter for ambient
 
+      // mic_raw simulation for AMBIENT_AMP chart
+      int mic_raw = 512 + random(-50, 51); // Reasonable movement around midpoint
+      if (soundEvent != "") mic_raw += 300; // Spike on sound
+
       StaticJsonDocument<512> doc;
       doc["device_id"]    = DEVICE_ID;
       doc["heart_rate"]   = avgBpm;
       doc["spo2"]         = fingerOn ? 98.0 : 0.0;
       doc["temperature"]  = simulated_temp;
       doc["ambient_temp"] = ambient_temp;
-      doc["sound_db"]     = (soundEvent != "") ? 85.0 : 45.0;
+      doc["sound_db"]     = (soundEvent != "") ? 85.0 : 45.0 + (random(-20, 21) / 10.0);
+      doc["mic_raw"]      = mic_raw;
       doc["ir_raw"]       = ir;
       doc["red_raw"]      = particleSensor.getRed();
       doc["sound_event"]  = soundEvent;

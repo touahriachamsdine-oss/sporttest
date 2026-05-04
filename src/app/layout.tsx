@@ -13,7 +13,7 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "evax | Neural Health Monitoring",
+  title: "evex | Neural Health Monitoring",
   description: "Cyberpunk biological telemetry system",
   manifest: "/manifest.json",
 };

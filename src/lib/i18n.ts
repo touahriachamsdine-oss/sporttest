@@ -2,7 +2,7 @@ export type Locale = 'en' | 'ar' | 'fr';
 
 export const translations = {
     en: {
-        app_name: 'evax',
+        app_name: 'evex',
         link_status: 'Neural_Link',
         live: 'Live',
         logs: 'Logs',
@@ -52,7 +52,7 @@ export const translations = {
         neural_command: 'واجهة التحكم العصبية',
     },
     fr: {
-        app_name: 'evax',
+        app_name: 'evex',
         link_status: 'Lien_Neural',
         live: 'Direct',
         logs: 'Journaux',

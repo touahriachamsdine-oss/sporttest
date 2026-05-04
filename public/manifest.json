@@ -1,6 +1,6 @@
 {
-    "name": "evax",
-    "short_name": "evax",
+    "name": "evex",
+    "short_name": "evex",
     "description": "Cyberpunk Health Monitoring System",
     "start_url": "/",
     "display": "standalone",

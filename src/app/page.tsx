@@ -186,7 +186,7 @@ export default function Dashboard() {
             {/* Main Dashboard */}
             <div className="lg:col-span-2 space-y-10">
               {/* Metrics */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 <MetricCard
                   label={t('heart_rate')}
                   value={current.heart_rate ? Number(current.heart_rate).toFixed(0) : '--'}
@@ -205,13 +205,6 @@ export default function Dashboard() {
                   color="cyan"
                   warning={Number(current.spo2) < 94}
                   subValue="SYNC_STABLE"
-                />
-                <MetricCard
-                  label={t('temperature')}
-                  value={current.temperature ? Number(current.temperature).toFixed(1) : '--'}
-                  unit="°C"
-                  icon={Thermometer}
-                  color="amber"
                 />
                 <MetricCard
                   label={t('ambient_temp')}
@@ -387,7 +380,7 @@ export default function Dashboard() {
 
       {/* Footer Branding - Desktop Only */}
       <footer className="hidden md:block pt-10 pb-20 text-center relative z-10 border-t border-white/5 opacity-20">
-        <p className="text-[9px] uppercase tracking-[1em] font-black">evax Neural Interface // Decentralized Health Stream</p>
+        <p className="text-[9px] uppercase tracking-[1em] font-black">evex Neural Interface // Decentralized Health Stream</p>
       </footer>
     </div >
   );
