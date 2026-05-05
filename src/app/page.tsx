@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { Heart, Droplet, Thermometer, Activity, LogIn, LogOut, Sparkles, History as HistoryIcon, Loader2, Languages, Moon, Sun, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import MetricCard from '@/components/dashboard/MetricCard';
