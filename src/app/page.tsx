@@ -510,20 +510,21 @@ function SleepArchive({ deviceId }: { deviceId: string }) {
             <div key={d} className="text-[10px] font-black text-white/20 text-center pb-4 border-b border-white/5 uppercase tracking-widest">{d}</div>
           ))}
           {Array.from({ length: 35 }).map((_, i) => {
-            const date = i - 3; // Shift to start from a reasonable day
-            if (date < 1 || date > 31) return <div key={i} className="aspect-square opacity-5 bg-white/5 border border-white/5" />;
+            const date = new Date();
+            date.setDate(date.getDate() - (34 - i));
+            const dateStr = date.toDateString();
 
-            const daySessions = sessions.filter(s => s.label === 'sleep' && new Date(s.start_time).getDate() === date);
+            const daySessions = sessions.filter(s => s.label === 'sleep' && new Date(s.start_time).toDateString() === dateStr);
             const totalDuration = daySessions.reduce((acc, s) => {
               if (!s.ended_at) return acc;
               return acc + (new Date(s.ended_at).getTime() - new Date(s.start_time).getTime());
             }, 0);
 
-            const intensity = Math.min(totalDuration / (8 * 3600000), 1); // 8 hours for max intensity
+            const intensity = Math.min(totalDuration / (8 * 3600000), 1);
 
             return (
-              <div key={i} className={`aspect-square border flex flex-col p-3 group transition-all relative overflow-hidden ${daySessions.length > 0 ? 'border-amber-500/30' : 'border-white/5 bg-black/40'}`}>
-                <span className="text-[10px] font-mono opacity-20 relative z-10">{date}</span>
+              <div key={i} className={`aspect-square border flex flex-col p-2 group transition-all relative overflow-hidden ${daySessions.length > 0 ? 'border-amber-500/30' : 'border-white/5 bg-black/40'}`}>
+                <span className="text-[8px] font-mono opacity-20 relative z-10">{date.getDate()}</span>
                 {daySessions.length > 0 ? (
                   <div
                     className="absolute inset-0 bg-amber-500/10 z-0 transition-all group-hover:bg-amber-500/20"
@@ -532,12 +533,49 @@ function SleepArchive({ deviceId }: { deviceId: string }) {
                 ) : null}
                 {daySessions.length > 0 && (
                   <div className="mt-auto flex justify-end relative z-10">
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+                    <div className="w-1 h-1 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
                   </div>
                 )}
               </div>
             );
           })}
+        </div>
+      </div>
+
+      <div className="cyber-panel p-8">
+        <h2 className="text-xl font-black tracking-tighter text-amber-400 mb-6 flex items-center gap-3">
+          <Activity size={20} />
+          REST_DURATION_TREND
+        </h2>
+        <div className="h-48 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={
+              Array.from({ length: 14 }).map((_, i) => {
+                const d = new Date();
+                d.setDate(d.getDate() - (13 - i));
+                const dStr = d.toDateString();
+                const daySessions = sessions.filter(s => s.label === 'sleep' && new Date(s.start_time).toDateString() === dStr);
+                const hours = daySessions.reduce((acc, s) => {
+                  if (!s.ended_at) return acc;
+                  return acc + (new Date(s.ended_at).getTime() - new Date(s.start_time).getTime());
+                }, 0) / 3600000;
+                return { date: d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }), hours: parseFloat(hours.toFixed(1)) };
+              })
+            }>
+              <defs>
+                <linearGradient id="sleepGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="date" hide />
+              <Tooltip
+                contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: '1px solid #f59e0b', borderRadius: '4px', fontSize: '10px' }}
+                itemStyle={{ color: '#fff' }}
+              />
+              <Area type="monotone" dataKey="hours" stroke="#f59e0b" fillOpacity={1} fill="url(#sleepGradient)" />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
