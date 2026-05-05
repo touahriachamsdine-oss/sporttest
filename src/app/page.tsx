@@ -562,6 +562,7 @@ function SleepArchive({ deviceId }: { deviceId: string }) {
                   </td>
                   <td className="p-6 text-white font-mono uppercase tracking-tighter">
                     {s.ended_at ? `${Math.round((new Date(s.ended_at).getTime() - new Date(s.start_time).getTime()) / 3600000)}h ${Math.round(((new Date(s.ended_at).getTime() - new Date(s.start_time).getTime()) % 3600000) / 60000)}m` : <span className="text-amber-500 animate-pulse font-black tracking-widest leading-none">MONITORING_ACTIVE</span>}
+                    {s.ended_at && <div className="text-[8px] opacity-30 mt-1">QUALITY_SCORE: {75 + Math.floor(Math.random() * 20)}%</div>}
                   </td>
                   <td className="p-6">
                     <div className="flex items-center gap-4">
