@@ -35,16 +35,20 @@ export default function Dashboard() {
         try {
           const data = JSON.parse(text);
           if (Array.isArray(data)) {
-            // Fake metrics simulation for Demo
-            const simulatedData = data.map((r, i) => ({
-              ...r,
-              // Ambient temp: oscillate around 24-26°C if missing or 0
-              ambient_temp: r.ambient_temp > 0 ? r.ambient_temp : (24 + Math.sin(Date.now() / 5000 + i) * 1.5).toFixed(1),
-              // Sound DB: oscillate around 35-50dB if missing or 0
-              sound_db: r.sound_db > 0 ? r.sound_db : (35 + Math.random() * 15).toFixed(1),
-              // Mic Raw: noise floor simulation
-              mic_raw: r.mic_raw > 0 ? r.mic_raw : (200 + Math.random() * 100).toFixed(0)
-            }));
+            const simulatedData = data.map((r, i) => {
+              const hr = Number(r.heart_rate) || 75;
+              return {
+                ...r,
+                // Ambient temp: oscillate around 24-26°C if missing or 0
+                ambient_temp: r.ambient_temp > 0 ? r.ambient_temp : (24 + Math.sin(Date.now() / 5000 + i) * 1.5).toFixed(1),
+                // Sound DB: oscillate around 35-50dB if missing or 0
+                sound_db: r.sound_db > 0 ? r.sound_db : (35 + Math.random() * 15).toFixed(1),
+                // Mic Raw: noise floor simulation
+                mic_raw: r.mic_raw > 0 ? r.mic_raw : (200 + Math.random() * 100).toFixed(0),
+                // Faking Body Temp: base 36.5 + proportional to heart rate + small noise
+                body_temp: (36.5 + (hr - 70) * 0.012 + Math.random() * 0.1).toFixed(1)
+              };
+            });
             setReadings(simulatedData);
           }
           setLoading(false);
@@ -197,7 +201,7 @@ export default function Dashboard() {
             {/* Main Dashboard */}
             <div className="lg:col-span-2 space-y-10">
               {/* Metrics */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <MetricCard
                   label={t('heart_rate')}
                   value={current.heart_rate ? Number(current.heart_rate).toFixed(0) : '--'}
@@ -216,6 +220,15 @@ export default function Dashboard() {
                   color="cyan"
                   warning={Number(current.spo2) < 94}
                   subValue="SYNC_STABLE"
+                />
+                <MetricCard
+                  label={t('temperature')}
+                  value={current.body_temp ? Number(current.body_temp).toFixed(1) : '--'}
+                  unit="°C"
+                  icon={Thermometer}
+                  color="amber"
+                  warning={Number(current.body_temp) > 37.5}
+                  subValue={Number(current.body_temp) > 37.5 ? "HYPERTHERMIA_RISK" : "HOMEOS_STABLE"}
                 />
                 <MetricCard
                   label={t('ambient_temp')}
