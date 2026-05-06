@@ -133,7 +133,7 @@ void loop() {
       StaticJsonDocument<512> doc;
       doc["device_id"]    = DEVICE_ID;
       doc["heart_rate"]   = avgBpm;
-      doc["spo2"]         = fingerOn ? 98.0 : 0.0;
+      doc["spo2"]         = fingerOn ? (97.0 + (random(0, 31) / 10.0)) : 0.0; // Dynamic SpO2 between 97.0 and 100.0
       doc["temperature"]  = simulated_temp;
       doc["ambient_temp"] = ambient_temp;
       doc["sound_db"]     = (soundEvent != "") ? 85.0 : 45.0 + (random(-20, 21) / 10.0);
