@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
-import { Heart, Droplet, Thermometer, Activity, LogIn, LogOut, Sparkles, History as HistoryIcon, Loader2, Languages, Moon, Sun, ShieldCheck } from 'lucide-react';
+import { Heart, Droplet, Thermometer, Activity, LogIn, LogOut, Sparkles, History as HistoryIcon, Loader2, Languages, Moon, Sun, ShieldCheck, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import MetricCard from '@/components/dashboard/MetricCard';
 import HealthChart from '@/components/dashboard/HealthChart';
@@ -144,6 +144,27 @@ export default function Dashboard() {
       alert('AI Analysis failed. Check console.');
     } finally {
       setAnalyzing(false);
+    }
+  };
+
+  const resetReadings = async () => {
+    if (!confirm('Are you sure you want to clear all data for this device?')) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/ingest?device_id=${DEVICE_ID}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setReadings([]);
+        alert('Data cleared successfully.');
+      } else {
+        throw new Error('Reset failed');
+      }
+    } catch (err) {
+      console.error('Reset failed:', err);
+      alert('Failed to reset data.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -324,6 +345,15 @@ export default function Dashboard() {
                   >
                     {analyzing ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
                     {t('scan')}
+                  </button>
+
+                    <button
+                    onClick={resetReadings}
+                    disabled={loading}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-white/5 border border-white/10 text-white/40 hover:text-red-500 hover:bg-red-500/10 hover:border-red-500/30 transition-all text-xs font-black uppercase tracking-widest disabled:opacity-30"
+                  >
+                    <Trash2 size={14} />
+                    {t('reset_data')}
                   </button>
                 </div>
               </div>

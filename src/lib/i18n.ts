@@ -25,6 +25,7 @@ export const translations = {
         query_placeholder: 'SYSTEM_QUERY://',
         awaiting_sync: 'Awaiting Inbound Sync',
         neural_command: 'Neural Command Interface',
+        reset_data: 'RESET_DATA',
     },
     ar: {
         app_name: 'إيفاكس',
@@ -50,6 +51,7 @@ export const translations = {
         query_placeholder: 'استعلام_النظام://',
         awaiting_sync: 'في انتظار المزامنة',
         neural_command: 'واجهة التحكم العصبية',
+        reset_data: 'إعادة تعيين البيانات',
     },
     fr: {
         app_name: 'evex',
@@ -75,5 +77,6 @@ export const translations = {
         query_placeholder: 'REQUÊTE_SYSTÈME://',
         awaiting_sync: 'Attente de Sync Inbound',
         neural_command: 'Interface de Commande Neurale',
+        reset_data: 'RÉINITIALISER',
     }
 };
