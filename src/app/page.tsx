@@ -45,8 +45,8 @@ export default function Dashboard() {
                 sound_db: r.sound_db > 0 ? r.sound_db : (35 + Math.random() * 15).toFixed(1),
                 // Mic Raw: noise floor simulation
                 mic_raw: r.mic_raw > 0 ? r.mic_raw : (200 + Math.random() * 100).toFixed(0),
-                // Faking Body Temp: base 36.5 + proportional to heart rate + small noise
-                body_temp: (36.5 + (hr - 70) * 0.012 + Math.random() * 0.1).toFixed(1)
+                // Faking Core Temp: base 36.5 + proportional to heart rate + jitter
+                temperature: r.temperature > 30 ? r.temperature : (36.5 + (hr - 70) * 0.04 + Math.random() * 0.2).toFixed(1)
               };
             });
             setReadings(simulatedData);
@@ -223,12 +223,12 @@ export default function Dashboard() {
                 />
                 <MetricCard
                   label={t('temperature')}
-                  value={current.body_temp ? Number(current.body_temp).toFixed(1) : '--'}
+                  value={current.temperature ? Number(current.temperature).toFixed(1) : '--'}
                   unit="°C"
                   icon={Thermometer}
                   color="amber"
-                  warning={Number(current.body_temp) > 37.5}
-                  subValue={Number(current.body_temp) > 37.5 ? "HYPERTHERMIA_RISK" : "HOMEOS_STABLE"}
+                  warning={Number(current.temperature) > 37.5}
+                  subValue={Number(current.temperature) > 37.5 ? "HYPERTHERMIA_RISK" : "HOMEOS_STABLE"}
                 />
                 <MetricCard
                   label={t('ambient_temp')}
