@@ -37,7 +37,7 @@ export default function Dashboard() {
           const data = JSON.parse(text);
           if (Array.isArray(data)) {
             const simulatedData = data.map((r, i) => {
-              const hr = Number(r.heart_rate) || 75;
+              const hr = Number(r.heart_rate);
               return {
                 ...r,
                 // Ambient temp: oscillate around 24-26°C if missing or 0
@@ -46,8 +46,8 @@ export default function Dashboard() {
                 sound_db: r.sound_db > 0 ? r.sound_db : (35 + Math.random() * 15).toFixed(1),
                 // Mic Raw: noise floor simulation
                 mic_raw: r.mic_raw > 0 ? r.mic_raw : (200 + Math.random() * 100).toFixed(0),
-                // Faking Core Temp: base 36.5 + proportional to heart rate + jitter
-                temperature: (36.5 + (hr - 70) * 0.05 + Math.random() * 0.2).toFixed(1)
+                // Core Temp: Start at -- (null) and scale with HR if detected
+                temperature: hr > 40 ? (36.5 + (hr - 70) * 0.05 + Math.random() * 0.2).toFixed(1) : null
               };
             });
             setReadings(simulatedData);
@@ -466,7 +466,7 @@ export default function Dashboard() {
 
       {/* Footer Branding - Desktop Only */}
       <footer className="hidden md:block pt-10 pb-20 text-center relative z-10 border-t border-white/5 opacity-20">
-        <p className="text-[9px] uppercase tracking-[1em] font-black">RAAI-AI Neural Interface // Decentralized Health Stream</p>
+        <p className="text-[9px] uppercase tracking-[1em] font-black">evex Neural Interface // Decentralized Health Stream</p>
       </footer>
     </div >
   );

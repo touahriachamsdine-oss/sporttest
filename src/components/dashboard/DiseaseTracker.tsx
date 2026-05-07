@@ -28,10 +28,8 @@ export default function DiseaseTracker() {
     });
 
     useEffect(() => {
-        if (user) {
-            fetchDiseases();
-        }
-    }, [user]);
+        fetchDiseases();
+    }, []);
 
     const fetchDiseases = async () => {
         try {
@@ -94,15 +92,6 @@ export default function DiseaseTracker() {
         }
     };
 
-    if (!user) {
-        return (
-            <div className="cyber-panel p-20 text-center">
-                <ShieldAlert size={48} className="mx-auto mb-6 text-red-500 opacity-20" />
-                <h3 className="text-xl font-black uppercase tracking-[0.3em] opacity-40">AUTHENTICATION_REQUIRED</h3>
-                <p className="text-[10px] mt-4 opacity-20 italic">Initialize neural link to access medical records</p>
-            </div>
-        );
-    }
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">

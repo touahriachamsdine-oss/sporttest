@@ -1,6 +1,6 @@
 {
-    "name": "RAAI-AI",
-    "short_name": "RAAI-AI",
+    "name": "evex",
+    "short_name": "evex",
     "description": "Cyberpunk Health Monitoring System",
     "start_url": "/",
     "display": "standalone",

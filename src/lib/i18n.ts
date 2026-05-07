@@ -2,7 +2,7 @@ export type Locale = 'en' | 'ar' | 'fr';
 
 export const translations = {
     en: {
-        app_name: 'RAAI-AI',
+        app_name: 'evex',
         link_status: 'Neural_Link',
         live: 'Live',
         logs: 'Logs',
@@ -36,7 +36,7 @@ export const translations = {
         no_diseases: 'NO_CONDITIONS_DETECTED // BIOMETRIC_CLEAR',
     },
     ar: {
-        app_name: 'RAAI-AI',
+        app_name: 'evex',
         link_status: 'الارتباط العصبي',
         live: 'مباشر',
         logs: 'السجلات',
@@ -70,7 +70,7 @@ export const translations = {
         no_diseases: 'لم يتم اكتشاف حالات // القياسات الحيوية سليمة',
     },
     fr: {
-        app_name: 'RAAI-AI',
+        app_name: 'evex',
         link_status: 'Lien_Neural',
         live: 'Direct',
         logs: 'Journaux',
