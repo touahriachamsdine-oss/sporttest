@@ -7,6 +7,7 @@ import Link from 'next/link';
 import MetricCard from '@/components/dashboard/MetricCard';
 import HealthChart from '@/components/dashboard/HealthChart';
 import AIChat from '@/components/dashboard/AIChat';
+import DiseaseTracker from '@/components/dashboard/DiseaseTracker';
 import { useApp } from '@/context/AppContext';
 import { Locale } from '@/lib/i18n';
 
@@ -17,7 +18,7 @@ export default function Dashboard() {
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'live' | 'history' | 'sleep'>('live');
+  const [activeTab, setActiveTab] = useState<'live' | 'history' | 'sleep' | 'diseases'>('live');
 
   const DEVICE_ID = 'esp32-v01';
 
@@ -46,7 +47,7 @@ export default function Dashboard() {
                 // Mic Raw: noise floor simulation
                 mic_raw: r.mic_raw > 0 ? r.mic_raw : (200 + Math.random() * 100).toFixed(0),
                 // Faking Core Temp: base 36.5 + proportional to heart rate + jitter
-                temperature: r.temperature > 30 ? r.temperature : (36.5 + (hr - 70) * 0.04 + Math.random() * 0.2).toFixed(1)
+                temperature: (36.5 + (hr - 70) * 0.05 + Math.random() * 0.2).toFixed(1)
               };
             });
             setReadings(simulatedData);
@@ -363,6 +364,21 @@ export default function Dashboard() {
             <div className="space-y-8">
               <AIChat context={{ metrics: current, session_active: !!dataSession }} />
 
+              {/* Quick Access: Medical Nexus */}
+              <div 
+                className="p-6 rounded-lg border border-green-500/20 bg-green-500/[0.02] space-y-4 relative overflow-hidden group cursor-pointer hover:bg-green-500/[0.05] transition-all"
+                onClick={() => setActiveTab('diseases')}
+              >
+                <div className="absolute top-0 left-0 w-1 h-full bg-green-500/20 group-hover:bg-green-500 transition-colors" />
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[10px] uppercase tracking-[0.3em] font-black text-green-400">Medical Nexus</h4>
+                  <ShieldCheck size={14} className="text-green-400" />
+                </div>
+                <div className="text-[11px] leading-relaxed opacity-60 font-mono italic">
+                  Access and manage chronic conditions tracking. Integrated with biometric telemetry.
+                </div>
+              </div>
+
               {/* Security Info - Carousel or list on mobile */}
               <div className="p-6 rounded-lg border border-white/5 bg-white/[0.02] space-y-4 relative overflow-hidden group">
                 <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500/20 group-hover:bg-cyan-500 transition-colors" />
@@ -375,8 +391,10 @@ export default function Dashboard() {
           </div>
         ) : activeTab === 'history' ? (
           <HistoryCalendar history={history} t={t} />
-        ) : (
+        ) : activeTab === 'sleep' ? (
           <SleepArchive deviceId={DEVICE_ID} />
+        ) : (
+          <DiseaseTracker />
         )
         }
       </main>
@@ -407,6 +425,14 @@ export default function Dashboard() {
             <Moon size={20} />
             <span className="text-[8px] font-bold uppercase mt-1 tracking-widest font-mono">Rest</span>
           </button>
+
+          <button
+            onClick={() => { setActiveTab('diseases'); }}
+            className={`flex-1 flex flex-col items-center py-2 transition-all rounded-xl ${activeTab === 'diseases' ? 'bg-green-500/20 text-green-400 shadow-[0_0_15px_rgba(34,197,94,0.1)]' : 'text-white/30'}`}
+          >
+            <ShieldCheck size={20} />
+            <span className="text-[8px] font-bold uppercase mt-1 tracking-widest font-mono">Records</span>
+          </button>
         </div>
       </nav>
 
@@ -430,11 +456,17 @@ export default function Dashboard() {
         >
           Sleep_Archive
         </button>
+        <button
+          onClick={() => setActiveTab('diseases')}
+          className={`px-8 py-3 text-[11px] uppercase tracking-[0.2em] font-black transition-all rounded-full ${activeTab === 'diseases' ? 'bg-green-500/20 text-green-400 shadow-[0_0_20px_rgba(34,197,94,0.2)] border border-green-500/30' : 'text-white/40 hover:text-white/70'}`}
+        >
+          Medical_Nexus
+        </button>
       </div>
 
       {/* Footer Branding - Desktop Only */}
       <footer className="hidden md:block pt-10 pb-20 text-center relative z-10 border-t border-white/5 opacity-20">
-        <p className="text-[9px] uppercase tracking-[1em] font-black">evex Neural Interface // Decentralized Health Stream</p>
+        <p className="text-[9px] uppercase tracking-[1em] font-black">RAAI-AI Neural Interface // Decentralized Health Stream</p>
       </footer>
     </div >
   );
